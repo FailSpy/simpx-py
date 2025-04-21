@@ -1,8 +1,10 @@
 from enum import Enum
 import logging
+import os
 import platform
 from string import Template
-import urllib
+import sys
+from urllib import request
 
 
 
@@ -30,30 +32,29 @@ class DownloadSimpleX:
     
     def __init__(self):
         self.base_url = Template("https://github.com/simplex-chat/simplex-chat/releases/latest/download/simplex-chat-${os}")
-        self.os = platform.uname().system
+        self.operating_system = platform.uname().system
         self.set_platform()
 
 
     def set_platform(self):
-        if self.os == "Windows":
-            self.os = OS.WINDOWS.value
-        elif self.os == "Darwin":
-            self.os = OS.MACOS.value
+        if self.operating_system == "Windows":
+            self.operating_system = OS.WINDOWS.value
+        elif self.operating_system == "Darwin":
+            self.operating_system = OS.MACOS.value
         else:
-            self.os = OS.LINUX.value
+            self.operating_system = OS.LINUX.value
 
         
     def download(self):
-        logging.info(f"Starting download simplex for {self.os}")
+        logging.info(f"Download Started")
         try:
-            response = urllib.request.urlretrieve(self.base_url.safe_substitute(os=self.os), APP_NAME)
+            response = request.urlretrieve(self.base_url.safe_substitute(os=self.operating_system), APP_NAME)
+            logging.info(f"Download Successful! Downloaded SimpleX for {self.operating_system} {response} ")
         except Exception as e:
-            logging.info(f"""Download Failed!
-Error:{e}""")
+            logging.info(f"Download Failed!\nError:{e}")
+            sys.exit()
        
         
-        
-        
-down = DownloadSimpleX()
-
-down.download()
+    
+download = DownloadSimpleX()
+download.download()
