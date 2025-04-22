@@ -1,9 +1,9 @@
 from enum import Enum
 import logging
 import os
-import platform
 from string import Template
 import sys
+import subprocess
 from urllib import request
 
 
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 # Contants
-APP_NAME = "simplex-chat"
+APP_NAME:str = "simplex-chat"
 
 class OS(Enum):
     LINUX = "ubuntu-22_04-x86-64"
@@ -32,7 +32,8 @@ class DownloadSimpleX:
     
     def __init__(self):
         self.base_url = Template("https://github.com/simplex-chat/simplex-chat/releases/latest/download/simplex-chat-${os}")
-        self.operating_system = platform.uname().system
+        self.cwd = os.getcwd()
+        self.operating_system = os.uname().sysname
         self.set_platform()
 
 
@@ -49,12 +50,22 @@ class DownloadSimpleX:
         logging.info(f"Download Started")
         try:
             response = request.urlretrieve(self.base_url.safe_substitute(os=self.operating_system), APP_NAME)
-            logging.info(f"Download Successful! Downloaded SimpleX for {self.operating_system} {response} ")
+            os.chmod(f"{self.cwd}/{APP_NAME}", 0o755)
+            logging.info(f"Download Successful! Downloaded SimpleX for {self.operating_system}")
         except Exception as e:
             logging.info(f"Download Failed!\nError:{e}")
             sys.exit()
-       
+
+
+
+    def run(self):
+        cwd_dir = os.listdir(self.cwd)
+        if APP_NAME in cwd_dir:
+            print("Downloaded")
+            subprocess.Popen([f"{self.cwd}/{APP_NAME}","--chat-server-port","5225", "--mute"])
+        else:
+            self.download()
+            self.run()
         
-    
-download = DownloadSimpleX()
-download.download()
+
+
