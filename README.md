@@ -4,7 +4,14 @@ An _unstable_ (for now) Python framework for creating bots on the [SimpleX chat 
 
 This library was initially created as a somewhat direct port of TypeScript structures, but aims to provide a decorator-based interface familiar to users of libraries like `discord.py`.
 
-**Note:** While functional, being a relatively direct conversion from the TypeScript structures means this does not always follow Python best practices and would benefit from further refinement.
+**Note:** While functional, being a relatively direct conversion from the TypeScript structures means this does not always follow Python best practices and would benefit from further refinement
+
+## Join the SimpleX group!
+
+[SimpX group](https://simplex.chat/contact#/?v=2-7&smp=smp%3A%2F%2FjA736UwbVG_LKSQyi9tr8LZOxgqBIQTJgbi7jgAGJhM%3D%40thebunny.zone%2Fr0S1zLSurZViaMtrK_BXeo_Vf7UIP1ce%23%2F%3Fv%3D1-3%26dh%3DMCowBQYDK2VuAyEA53LohGQGd_7rmltrzZtFagwM2s6CQk0XDeqQLMKtmhk%253D%26srv%3Dbunnysmppnjrd7f4saxjcewlnf3jxyvyjjmtsvdz7cnpxpt5y4mqnoyd.onion&data=%7B%22groupLinkId%22%3A%22rCjlKF_XB4fZFujtiOChlg%3D%3D%22%7D)
+
+Come chat about bot development, the project, or even SimpleX in general. 
+
 
 ## Features
 
