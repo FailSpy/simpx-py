@@ -2,19 +2,20 @@ from enum import Enum
 import logging
 import os
 from string import Template
-import sys
 import subprocess
 from urllib import request
 
 
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(format="[%(levelname)s] [%(message)s]",level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 # Contants
 APP_NAME:str = "simplex-chat"
+
+
 
 class OS(Enum):
     LINUX = "ubuntu-22_04-x86-64"
@@ -23,7 +24,7 @@ class OS(Enum):
 
 
 
-class DownloadSimpleX:
+class SimpleXDaemon:
     """Automatic download of simplex client from the offical simplex github page
 
     The download will be saved to the current working directory if the client is already download
@@ -54,7 +55,7 @@ class DownloadSimpleX:
             logging.info(f"Download Successful! Downloaded SimpleX for {self.operating_system}")
         except Exception as e:
             logging.info(f"Download Failed!\nError:{e}")
-            sys.exit()
+            sys.exit(1)
 
 
 
