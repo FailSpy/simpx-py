@@ -1,19 +1,30 @@
 from enum import Enum
+import hashlib
 import logging
 import os
 from string import Template
 import subprocess
-from urllib import request
+from pathlib import Path
 
+
+import requests
+from tqdm import tqdm
 
 
 # Configure logging
-logging.basicConfig(format="[%(levelname)s] [%(message)s]",level=logging.INFO)
+logging.basicConfig(format="[%(levelname)s] %(message)s",level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
 # Contants
 APP_NAME:str = "simplex-chat"
+DIR_NAME:str = "simplex-dir"
+download_dir:str = os.path.join(Path.home(),DIR_NAME)
+abs_file_path:str = os.path.join(download_dir,APP_NAME)
+try:
+    os.mkdir(download_dir)
+except FileExistsError:
+    pass
 
 
 
@@ -27,17 +38,16 @@ class OS(Enum):
 class SimpleXDaemon:
     """Automatic download of simplex client from the offical simplex github page
 
-    The download will be saved to the current working directory if the client is already download
+    The download will be saved to the simplex-dir folder in the /home/[user] directory if the client is already download
     it will be run in the background.
     """
     
     def __init__(self):
         self.base_url = Template("https://github.com/simplex-chat/simplex-chat/releases/latest/download/simplex-chat-${os}")
-        self.cwd = os.getcwd()
         self.operating_system = os.uname().sysname
         self.set_platform()
 
-
+    # The OS will default to linux version 
     def set_platform(self):
         if self.operating_system == "Windows":
             self.operating_system = OS.WINDOWS.value
@@ -49,24 +59,39 @@ class SimpleXDaemon:
         
     def download(self):
         logging.info(f"Download Started")
+        logging.info(f"Downloading to {download_dir}")
         try:
-            response = request.urlretrieve(self.base_url.safe_substitute(os=self.operating_system), APP_NAME)
-            os.chmod(f"{self.cwd}/{APP_NAME}", 0o755)
-            logging.info(f"Download Successful! Downloaded SimpleX for {self.operating_system}")
+            response = requests.get(url=self.base_url.safe_substitute(os=self.operating_system), stream=True)
+            total_size = int(response.headers.get('content-length', 0))
+            with open(abs_file_path, 'wb') as file, tqdm(
+                desc=f"Downloading SimpleX for {self.operating_system}",
+                total=total_size,
+                unit='iB',
+                unit_scale=True
+            )as progress_bar:
+                    for data in response.iter_content(chunk_size=1024):
+                        size = file.write(data)
+                        progress_bar.update(size)
+                
+            os.chmod(f"{abs_file_path}", 0o755)
+            # Will add integrity checks here 
+            # hashlib.sha256()
+            logging.info(f"Download Successful!")
         except Exception as e:
-            logging.info(f"Download Failed!\nError:{e}")
-            sys.exit(1)
+            logging.critical(f"Download Failed!\nError:{e}")
+            os.sys.exit(1)
 
 
 
     def run(self):
-        cwd_dir = os.listdir(self.cwd)
-        if APP_NAME in cwd_dir:
-            print("Downloaded")
-            subprocess.Popen([f"{self.cwd}/{APP_NAME}","--chat-server-port","5225", "--mute"])
+        if APP_NAME in os.listdir(download_dir):
+            logging.info("Already downloaded")
+            subprocess.Popen([f"{abs_file_path}","--chat-server-port","5225", "--mute"])
         else:
             self.download()
             self.run()
         
 
 
+down = SimpleXDaemon()
+down.run()
