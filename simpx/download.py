@@ -8,6 +8,7 @@ from pathlib import Path
 
 
 import requests
+from requests.exceptions import ConnectionError, Timeout
 from tqdm import tqdm
 
 
@@ -44,6 +45,7 @@ class SimpleXDaemon:
     
     def __init__(self):
         self.base_url = Template("https://github.com/simplex-chat/simplex-chat/releases/latest/download/simplex-chat-${os}")
+        self.release_url = "https://github.com/simplex-chat/simplex-chat/releases"
         self.operating_system = os.uname().sysname
         self.set_platform()
 
@@ -51,6 +53,7 @@ class SimpleXDaemon:
     def set_platform(self):
         if self.operating_system == "Windows":
             self.operating_system = OS.WINDOWS.value
+            APP_NAME = APP_NAME+".exe"
         elif self.operating_system == "Darwin":
             self.operating_system = OS.MACOS.value
         else:
@@ -73,10 +76,33 @@ class SimpleXDaemon:
                         size = file.write(data)
                         progress_bar.update(size)
                 
-            os.chmod(f"{abs_file_path}", 0o755)
-            # Will add integrity checks here 
-            # hashlib.sha256()
-            logging.info(f"Download Successful!")
+            
+            # Will add integrity checks here
+            # Until simplex hash contains all the hashes need to verify install this will be the default
+            with open(abs_file_path,"rb") as file:
+                digest = hashlib.file_digest(file, "sha256").hexdigest()
+            logging.info(f"SimpleX file hash: \033[1m {digest} \033[0m")
+            logging.info(f"Chech hash here: {self.release_url}")
+            file_integrity = input("Is the hash correct?[y,N] ")
+
+            if file_integrity.lower() in ['y',"yes"]:
+                os.chmod(abs_file_path, 0o755)
+                logging.info(f"Download Successful!")
+            elif file_integrity.lower() in ['n','no']:
+                logging.info("Retrying download!")
+                self.download()
+            else:
+                logging.warn("Input not recognized.")
+                os.sys.exit(1)
+
+        except ConnectionError:
+            logging.critical(f"Connection Failed! Are you connected to the internet?")
+            os.sys.exit(1)
+        except Timeout:
+            logging.critical(f"Connection timed out.")
+            os.sys.exit(1)
+        except KeyboardInterrupt:
+            logging.info("Exiting")
         except Exception as e:
             logging.critical(f"Download Failed!\nError:{e}")
             os.sys.exit(1)
@@ -90,8 +116,3 @@ class SimpleXDaemon:
         else:
             self.download()
             self.run()
-        
-
-
-down = SimpleXDaemon()
-down.run()
