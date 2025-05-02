@@ -1,15 +1,16 @@
-from enum import Enum
 import hashlib
 import logging
 import os
-from string import Template
 import subprocess
+from enum import Enum
+from string import Template
 from pathlib import Path
 
 
 import requests
-from requests.exceptions import ConnectionError, Timeout
 from tqdm import tqdm
+from requests.exceptions import ConnectionError, Timeout
+
 
 
 # Configure logging
@@ -45,6 +46,7 @@ class SimpleXDaemon:
     
     def __init__(self):
         self.base_url = Template("https://github.com/simplex-chat/simplex-chat/releases/latest/download/simplex-chat-${os}")
+        # Link used to check hashes
         self.release_url = "https://github.com/simplex-chat/simplex-chat/releases"
         self.operating_system = os.uname().sysname
         self.set_platform()
@@ -88,6 +90,10 @@ class SimpleXDaemon:
             if file_integrity.lower() in ['y',"yes"]:
                 os.chmod(abs_file_path, 0o755)
                 logging.info(f"Download Successful!")
+                # Simplex needs to be run so that there is an initial user
+                # ctrl-c to kill this process
+                subprocess.run([abs_file_path])
+                
             elif file_integrity.lower() in ['n','no']:
                 logging.info("Retrying download!")
                 self.download()
@@ -104,15 +110,19 @@ class SimpleXDaemon:
         except KeyboardInterrupt:
             logging.info("Exiting")
         except Exception as e:
-            logging.critical(f"Download Failed!\nError:{e}")
+            logging.critical(f"Download Failed!\nError: {e}")
             os.sys.exit(1)
 
 
-
-    def run(self):
+    def run(self, port_number=5225):
         if APP_NAME in os.listdir(download_dir):
-            logging.info("Already downloaded")
-            subprocess.Popen([f"{abs_file_path}","--chat-server-port","5225", "--mute"])
+            logging.info("Already downloaded.")
+            try:
+                bg_task = subprocess.Popen([f"{abs_file_path}","--chat-server-port",f"{port_number}", "--mute"])
+            except Exception as e:
+                logging.critical("Running simplex in the background failed!")
+                bg_task.kill()
+                
         else:
             self.download()
             self.run()
