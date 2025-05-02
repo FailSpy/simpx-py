@@ -1,2 +1,8 @@
 qrcode>=8.0
 websockets>=13.0,<14.0
+certifi==2025.4.26
+charset-normalizer==3.4.1
+idna==3.10
+requests==2.32.3
+tqdm==4.67.1
+urllib3==2.4.0
