@@ -1,5 +1,7 @@
 # simpx-py
 
+![Logo of SimpX with a Pythonic colored version of the SimpleX symbol, further reading "a Python module for easy development of SimpleX bots"](https://repository-images.githubusercontent.com/958886714/2cf76236-f6a6-4ea9-8a0f-3256d4349eb4)
+
 An _unstable_ (for now) Python framework for creating bots on the [SimpleX chat platform](https://simplex.chat/).
 
 This library was initially created as a somewhat direct port of TypeScript structures, but aims to provide a decorator-based interface familiar to users of libraries like `discord.py`.
