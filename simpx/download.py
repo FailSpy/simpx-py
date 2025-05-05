@@ -2,6 +2,8 @@ import hashlib
 import logging
 import os
 import subprocess
+import shutil
+
 from enum import Enum
 from string import Template
 from pathlib import Path
@@ -23,6 +25,7 @@ APP_NAME:str = "simplex-chat"
 DIR_NAME:str = "simplex-dir"
 download_dir:str = os.path.join(Path.home(),DIR_NAME)
 abs_file_path:str = os.path.join(download_dir,APP_NAME)
+# 
 try:
     os.mkdir(download_dir)
 except FileExistsError:
@@ -64,12 +67,11 @@ class SimpleXDaemon:
         
     def download(self):
         logging.info(f"Download Started")
-        logging.info(f"Downloading to {download_dir}")
         try:
             response = requests.get(url=self.base_url.safe_substitute(os=self.operating_system), stream=True)
             total_size = int(response.headers.get('content-length', 0))
             with open(abs_file_path, 'wb') as file, tqdm(
-                desc=f"Downloading SimpleX for {self.operating_system}",
+                desc=f"Downloading SimpleX for \033[5m {self.operating_system} \033[0m",
                 total=total_size,
                 unit='iB',
                 unit_scale=True
@@ -85,44 +87,58 @@ class SimpleXDaemon:
                 digest = hashlib.file_digest(file, "sha256").hexdigest()
             logging.info(f"SimpleX file hash: \033[1m {digest} \033[0m")
             logging.info(f"Chech hash here: {self.release_url}")
-            file_integrity = input("Is the hash correct?[y,N] ")
 
-            if file_integrity.lower() in ['y',"yes"]:
-                os.chmod(abs_file_path, 0o755)
-                logging.info(f"Download Successful!")
-                # Simplex needs to be run so that there is an initial user
-                # ctrl-c to kill this process
-                subprocess.run([abs_file_path])
+            while True:
+                file_integrity_check = input("Is the hash correct?[y,N] ")
+                if file_integrity_check.lower() in ['', 'y', "yes"]:
+                    os.chmod(abs_file_path, 0o755)
+                    logging.info(f"Download Successful!")
+                    # Simplex needs to be run so that there is an initial user
+                    # proccess dies after 50 secs
+                    subprocess.run([abs_file_path])
+                    break
+                elif file_integrity_check.lower() in ['n',"no"]:
+                    logging.info("Retrying download!")
+                    self.download()
+                    break
+                else:
+                    logging.warning("Input not recognized.")
+                    continue
                 
-            elif file_integrity.lower() in ['n','no']:
-                logging.info("Retrying download!")
-                self.download()
-            else:
-                logging.warn("Input not recognized.")
-                os.sys.exit(1)
-
         except ConnectionError:
             logging.critical(f"Connection Failed! Are you connected to the internet?")
             os.sys.exit(1)
         except Timeout:
             logging.critical(f"Connection timed out.")
+            shutil.rmtree(download_dir)
             os.sys.exit(1)
         except KeyboardInterrupt:
             logging.info("Exiting")
+            os.sys.exit(1)
         except Exception as e:
             logging.critical(f"Download Failed!\nError: {e}")
+            shutil.rmtree(download_dir)
             os.sys.exit(1)
 
 
     def run(self, port_number=5225):
-        if APP_NAME in os.listdir(download_dir):
-            logging.info("Already downloaded.")
-            try:
+        try:
+            if APP_NAME in os.listdir(download_dir):
+                logging.info("Already downloaded.")
                 bg_task = subprocess.Popen([f"{abs_file_path}","--chat-server-port",f"{port_number}", "--mute"])
-            except Exception as e:
-                logging.critical("Running simplex in the background failed!")
-                bg_task.kill()
-                
-        else:
-            self.download()
-            self.run()
+            else:
+                self.download()
+                self.run()
+        except KeyboardInterrupt:
+            logging.info("Exiting")
+            bg_task.kill()
+        except UnboundLocalError:
+            logging.warning("Background Task not running so not killed.")
+        except PermissionError:
+            logging.critical("Premission denied while try to access executable.")
+            shutil.rmtree(abs_file_path)
+        except Exception as e:
+            logging.critical("Running simplex in the background failed")
+            bg_task.kill() 
+
+
