@@ -81,21 +81,20 @@ class SimpleXDaemon:
                         progress_bar.update(size)
                 
             
-            # Will add integrity checks here
-            # Until simplex hash contains all the hashes need to verify install this will be the default
+            # Until simplex hash file contains all the hashes need to verify the install this will be the default method
             with open(abs_file_path,"rb") as file:
                 digest = hashlib.file_digest(file, "sha256").hexdigest()
             logging.info(f"SimpleX file hash: \033[1m {digest} \033[0m")
-            logging.info(f"Chech hash here: {self.release_url}")
+            logging.info(f"Check file hash here: {self.release_url}")
 
             while True:
-                file_integrity_check = input("Is the hash correct?[y,N] ")
+                file_integrity_check = input("Is the hash correct?[Y/n] ")
                 if file_integrity_check.lower() in ['', 'y', "yes"]:
                     os.chmod(abs_file_path, 0o755)
                     logging.info(f"Download Successful!")
                     # Simplex needs to be run so that there is an initial user
                     # proccess dies after 50 secs
-                    subprocess.run([abs_file_path])
+                    # subprocess.run([abs_file_path])
                     break
                 elif file_integrity_check.lower() in ['n',"no"]:
                     logging.info("Retrying download!")
@@ -107,18 +106,18 @@ class SimpleXDaemon:
                 
         except ConnectionError:
             logging.critical(f"Connection Failed! Are you connected to the internet?")
-            os.sys.exit(1)
+            
         except Timeout:
             logging.critical(f"Connection timed out.")
             shutil.rmtree(download_dir)
-            os.sys.exit(1)
+            
         except KeyboardInterrupt:
             logging.info("Exiting")
-            os.sys.exit(1)
+            
         except Exception as e:
             logging.critical(f"Download Failed!\nError: {e}")
             shutil.rmtree(download_dir)
-            os.sys.exit(1)
+            
 
 
     def run(self, port_number=5225):
