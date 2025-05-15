@@ -1,8 +1,10 @@
 import hashlib
 import logging
 import os
-import subprocess
+import re
 import shutil
+import subprocess
+
 
 from enum import Enum
 from string import Template
@@ -10,7 +12,7 @@ from pathlib import Path
 
 
 import requests
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from requests.exceptions import ConnectionError, Timeout
 
 
@@ -87,22 +89,31 @@ class SimpleXDaemon:
             logging.info(f"SimpleX file hash: \033[1m {digest} \033[0m")
             logging.info(f"Check file hash here: {self.release_url}")
 
-            while True:
-                file_integrity_check = input("Is the hash correct?[Y/n] ")
-                if file_integrity_check.lower() in ['', 'y', "yes"]:
-                    os.chmod(abs_file_path, 0o755)
-                    logging.info(f"Download Successful!")
-                    # Simplex needs to be run so that there is an initial user
-                    # proccess dies after 50 secs
-                    # subprocess.run([abs_file_path])
-                    break
-                elif file_integrity_check.lower() in ['n',"no"]:
-                    logging.info("Retrying download!")
-                    self.download()
-                    break
-                else:
-                    logging.warning("Input not recognized.")
-                    continue
+            # Scrape release page to verify hash
+            response = requests.get(self.release_url).text
+            if re.search(digest, response):
+                logging.info("Download Successful!")
+            else:
+                logging.warning("Integrity Check Failed. Retrying.")
+                self.download()
+
+            
+           # while True:
+           #     file_integrity_check = input("Is the hash correct?[Y/n] ")
+           #     if file_integrity_check.lower() in ['', 'y', "yes"]:
+           #         os.chmod(abs_file_path, 0o755)
+           #         logging.info(f"Download Successful!")
+           #          Simplex needs to be run so that there is an initial user
+           #          proccess dies after 50 secs
+           #          subprocess.run([abs_file_path])
+           #         break
+           #     elif file_integrity_check.lower() in ['n',"no"]:
+           #         logging.info("Retrying download!")
+           #         self.download()
+           #         break
+           #     else:
+           #         logging.warning("Input not recognized.")
+           #       continue
                 
         except ConnectionError:
             logging.critical(f"Connection Failed! Are you connected to the internet?")
@@ -138,6 +149,7 @@ class SimpleXDaemon:
             shutil.rmtree(abs_file_path)
         except Exception as e:
             logging.critical("Running simplex in the background failed")
-            bg_task.kill() 
+            bg_task.kill()
 
-
+download = SimpleXDaemon()
+download.download()
