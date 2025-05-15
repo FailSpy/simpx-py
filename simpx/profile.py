@@ -342,8 +342,8 @@ class ProfileManager:
         # Create a new user profile
         user = await self.client.api_create_active_user(
             self.current_profile.simplex_profile,
-            sameServers=True,
-            pastTimestamp=False
+            same_servers=True,
+            past_timestamp=False
         )
         print(f"Created new profile: {self.current_profile.display_name}")
         
