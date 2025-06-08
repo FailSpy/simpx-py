@@ -150,6 +150,3 @@ class SimpleXDaemon:
         except Exception as e:
             logging.critical("Running simplex in the background failed")
             bg_task.kill()
-
-download = SimpleXDaemon()
-download.download()
